@@ -7,6 +7,8 @@ import requests
 
 from scrapy.selector import Selector
 
+from pprint import pprint
+
 
 def fetch_page(url):
 
@@ -23,21 +25,23 @@ def talk_links_from_listpage( url ):
 def talk_from_page(url):
     html = fetch_page(url)
     sel = Selector(text=html)
-    title = sel.css('.talk0-hero__title').extract()
-    descripttion = sel.css('.talk-description').extract()
+    pprint( url )
+    title = sel.css('.talk-hero__title').extract()
+    description = sel.css('.talk-description').extract()
+    pprint( title )
+    pprint( description )
     return {
         'title' : title,
-        'description' : description, 
+        'description' : description 
     }
 
 def latest_talks(page=1):
-    list_url = 'http://www.ted.com/talks/browsers?page={0}''.format(Page)
-    talk_links = talk_links_from_Listpage( list_url ) 
-    talks = [talk_from_page(url) for url in talk_links]
+    list_url = 'http://www.ted.com/talks/browse?page={0}'.format(page)
+    talk_links = talk_links_from_listpage( list_url ) 
+    talks = [talk_from_page('http://www.ted.com'+url) for url in talk_links]
     return talks
 
-
-from pprint import pprint
+print("test")
 pprint( latest_talks() )
 
 
