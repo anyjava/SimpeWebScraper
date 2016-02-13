@@ -10,11 +10,13 @@ def soupOf(url):
 	html = urlopen(TORRENT_HOST + url)
 	return BeautifulSoup(html.read(), "html.parser")
 
-def loadTorrentContentUrl():
-	bsObj = soupOf("board.php?mode=list&b_id=tent")
+def loadTorrentContentUrl(program_type, detailUrl):
+#	bsObj = soupOf("board.php?mode=list&b_id=tent")
+	bsObj = soupOf(detailUrl)
 	links = bsObj.findAll("td", {"class": "subject"})
 	programs = []
-	maxWrid = getLastestWrId()
+	maxWrid = getLastestWrId(program_type)
+	print("maxWrid: " + str(maxWrid))
 	for aTag in links:
 		print(getUrl(aTag))
 		print(getTitle(aTag))
@@ -25,8 +27,10 @@ def loadTorrentContentUrl():
 			print("SKIP!! => " + wrid + "is lastest Wrid.")
 			break;
 		if title.find("720") >= 0:
-			program = [[wrid, title, getMargnet(url)]]
-			programs += program
+			magnet = getMargnet(url)
+			if (magnet != ""):
+				program = [[wrid, title, getMargnet(url), program_type]]
+				programs += program
 	if len(programs) > 0:
 		savePrograms(programs)
 	else:
@@ -42,21 +46,35 @@ def loadTorrentContent(url):
 	return soupOf(url).find(id="external-frame")["src"]
 	
 def getMargnet(url):
-	return soupOf(url).findAll("div", {"class": "torrent_magnet"})[0].a.get_text()
+	magnets = soupOf(url).findAll("div", {"class": "torrent_magnet"})
+	if (len(magnets) > 0):
+		return soupOf(url).findAll("div", {"class": "torrent_magnet"})[0].a.get_text()
+	else:
+		return ""
 
-def getLastestWrId():
+def getLastestWrId(program_type):
 	cur = conn.cursor()
-	sql = "select max(wrid) from magnet_list"
+	sql = "select ifnull(max(wrid), 0) from magnet_list where program_type = '"+program_type+"'"
 	cur.execute(sql)
-	return cur.fetchall()[0][0]
+	rs = cur.fetchall()
+	return rs[0][0]
 
 def savePrograms(lists):
 	cur = conn.cursor()
-	sql = "insert into magnet_list(wrid, title, magnet) values (?, ?, ?)"
+	sql = "insert into magnet_list(wrid, title, magnet, program_type) values (?, ?, ?, ?)"
 	cur.executemany(sql, lists)
 	conn.commit()
 
-loadTorrentContentUrl();
+# 예능
+print("STARTING ent")
+loadTorrentContentUrl("ENT", "board.php?mode=list&b_id=tent")
+# 드라마
+print("STARTING drama")
+loadTorrentContentUrl("DRAMA", "board.php?mode=list&b_id=tdrama")
+# 시사
+#print("STARTING tv")
+#loadTorrentContentUrl("TV", "board.php?mode=list&b_id=tv")
+print("END")
 
 # Connection 닫기
 conn.close()
