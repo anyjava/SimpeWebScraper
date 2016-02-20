@@ -1,13 +1,18 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import sqlite3
+import ssl
+import urllib
 
-TORRENT_HOST = "http://www.tfreeca22.com/"
+TORRENT_HOST = "https://torrentwal.com/"
+
 # SQLite DB 연결
 conn = sqlite3.connect("test.db")
 
 def soupOf(url):
-	html = urlopen(TORRENT_HOST + url)
+	context = ssl._create_unverified_context()
+	req = urllib.request.Request(TORRENT_HOST + url, headers={'User-Agent': 'Wget/1.18 (darwin16.0.0)'})
+	html = urlopen(req, context=context)
 	return BeautifulSoup(html.read(), "html.parser")
 
 def loadTorrentContentUrl(program_type, detailUrl):
@@ -21,8 +26,11 @@ def loadTorrentContentUrl(program_type, detailUrl):
 		print(getUrl(aTag))
 		print(getTitle(aTag))
 		title = getTitle(aTag).strip()
-		url = loadTorrentContent(getUrl(aTag)).strip()
-		wrid = url.split("?")[1].split("&")[1].split("=")[1];
+		url = getUrl(aTag)
+#		url = loadTorrentContent(getUrl(aTag)).strip()
+#		print("load url>> " + url);
+#		wrid = url.split("?")[1].split("&")[1].split("=")[1];
+		wrid = url[3:].split("/")[1][:-5]
 		if maxWrid >= int(wrid):
 			print("SKIP!! => " + wrid + "is lastest Wrid.")
 			break;
@@ -37,18 +45,19 @@ def loadTorrentContentUrl(program_type, detailUrl):
 		print('no element for insert.')
 
 def getUrl(aTag):
-	return aTag.findAll("a")[1]["href"]
+	return aTag.findAll("a")[0]["href"][3:]
 
 def getTitle(aTag):
-	return aTag.findAll("a")[1].get_text()
+	return aTag.findAll("a")[0].get_text()
 
 def loadTorrentContent(url):
 	return soupOf(url).find(id="external-frame")["src"]
 	
 def getMargnet(url):
-	magnets = soupOf(url).findAll("div", {"class": "torrent_magnet"})
+	magnets = soupOf(url).find(text="MagNet:").parent.findNext('a').get_text()
 	if (len(magnets) > 0):
-		return soupOf(url).findAll("div", {"class": "torrent_magnet"})[0].a.get_text()
+#		return soupOf(url).findAll("div", {"class": "torrent_magnet"})[0].a.get_text()
+		return magnets
 	else:
 		return ""
 
@@ -67,10 +76,10 @@ def savePrograms(lists):
 
 # 예능
 print("STARTING ent")
-loadTorrentContentUrl("ENT", "board.php?mode=list&b_id=tent")
+loadTorrentContentUrl("ENT", "torrent_variety/torrent1.htm")
 # 드라마
 print("STARTING drama")
-loadTorrentContentUrl("DRAMA", "board.php?mode=list&b_id=tdrama")
+loadTorrentContentUrl("DRAMA", "torrent_tv/torrent1.htm")
 # 시사
 #print("STARTING tv")
 #loadTorrentContentUrl("TV", "board.php?mode=list&b_id=tv")
