@@ -7,12 +7,12 @@ conn = sqlite3.connect("test.db")
 cur = conn.cursor()
  
 # SQL 쿼리 실행
-cur.execute("select * from magnet_list")
+cur.execute("select * from magnet_list order by id")
  
 # 데이타 Fetch
 rows = cur.fetchall()
 for row in rows:
-    print(row[1])
+    print(row)
  
 # Connection 닫기
 conn.close()

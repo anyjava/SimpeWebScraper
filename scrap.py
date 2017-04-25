@@ -21,7 +21,7 @@ def loadTorrentContentUrl():
 		title = getTitle(aTag).strip()
 		url = loadTorrentContent(getUrl(aTag)).strip()
 		wrid = url.split("?")[1].split("&")[1].split("=")[1];
-		if maxWrid < int(wrid):
+		if maxWrid >= int(wrid):
 			print("SKIP!! => " + wrid + "is lastest Wrid.")
 			break;
 		if title.find("720") >= 0:
